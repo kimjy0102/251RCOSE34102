@@ -10,7 +10,7 @@ Queue* create_queue(int number_of_process, Node** node_array)
     }
     Queue* q = (Queue*)malloc(sizeof(Queue));
     if ( !q ) {
-        printf("Memory allocation failed\n");
+        printf("Queue Memory allocation failed\n");
         return NULL;
     }
     q->head = NULL;
@@ -25,27 +25,114 @@ Queue* create_queue(int number_of_process, Node** node_array)
             {
                 q->head = node_array[i];
                 q->tail = node_array[i];
+                node_array[i]->in_queue = 1;
             }
             else 
             {
                 q->tail->next = node_array[i];
                 node_array[i]->before = q->tail;
                 q->tail = node_array[i];
+                node_array[i]->in_queue = 1;
             }
         }
         q->size = q->size + 1;
     }
     return q;
 }
+
 Node* create_node(Process* process)
 {
     Node* node = (Node*)malloc(sizeof(Node));
     if (!node){
-        printf("Memory allocation failed\n");
+        printf("Node Memory allocation failed\n");
+        free(node->process);
         return NULL;
     }
     node->process = process;
     node->before = NULL;
     node->next = NULL;
+    node->in_queue = 0;
     return node;
+}
+// location 필요 여부.. queue자체를 ready queue로 만들면 location 필요 없나? 
+// 아니면 arrival time에 따라 넣어줘야 하는가? -> arrival time에 따라 들어가니까 location 필요 없을 듯
+void insert_node_queue(Queue* q, Node* new_node) 
+{
+    // always inserted enqueue
+    q->tail->next = new_node;
+    new_node->before = q->tail;
+    q->tail = new_node;
+    q->tail->in_queue = 1;
+    q->size++;
+    printf("Process %d is inserted.\n", new_node->process->PID);
+}
+Node* dequeue(Queue* q) // Remove only the first node in queue
+{
+    Node* temp = q->head;
+    q->head = q->head->next;
+    q->head->before = NULL;
+    q->size--;
+    temp->in_queue = 0;
+    printf("Process %d is removed from ready queue.\n", temp->process->PID);
+    return temp;
+}
+Node* remove_node_queue(Queue* q, int location)
+{
+    int count = 1;
+    Node* current = q->head;
+    Node* prev = NULL;
+    if ( location > q->size)
+    {
+        printf("Location is out of boundary!\n");
+    }
+    else 
+    {
+        for(int i = 1; i<location; i++)
+        {
+            prev = current;
+            current = current->next;
+        }
+    }
+    if ( current == q->head) // if first node removal
+    {
+        q->head = current->next;
+        q->head->before = NULL;
+    }
+    else if ( current == q->tail )  // last node removal
+    {
+        q->tail = prev;
+        q->tail->next = NULL;
+    }
+    else                            // normal removal
+    {
+        prev->next = current->next; 
+        current->next->before = prev;
+    }
+    q->size--;
+    current->in_queue = 0;
+    return current;
+}
+
+void print_queue(Queue* q)
+{
+    Node* current = q->head;
+    printf("========Queue status========\n");
+    if ( current == NULL)
+    {
+        printf("No processes in ready queue now\n");
+    }
+    else
+    {
+        while (current)
+        {
+            printf("PID: %d, Arrival: %d, CPU time: %d, Priority: %d\n",
+                current->process->PID, current->process->arrival_time, current->process->CPU_burst_time, current->process->Priority);
+            current = current->next;    
+        }
+    }
+}
+
+void clean_queue(Queue* q)
+{
+    free(q);
 }

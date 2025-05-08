@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "linked_list.C": "cpp",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "config.h": "c"
     }
 }

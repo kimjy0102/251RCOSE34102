@@ -1,25 +1,23 @@
 #ifndef CONFIG_H
-
 #define CONFIG_H
-#define MAX_PROCESS 20
-#define TIME_QUANTUM 4
-#include<string.h>
 
-Queue* create_queue(int number_of_process, Node** node_array);
-void enqueue(Queue * q, Node* node);
-void dequeue(Queue * q, Node* node);
+#define MAX_PROCESS 10  // Max number of process constraint
+#define TIME_QUANTUM 4 // RR
 
 typedef struct Process{
     int PID;
     int arrival_time;
     int CPU_burst_time;
-    int Priority;   
+    int Priority;
+    int turnaround_time;   // Total time from arrival to completion
+    int waiting_time;      // Time spent waiting in ready queue
 } Process;
 
 typedef struct Node{
     Process* process;
     struct Node * next;
     struct Node * before;
+    int in_queue;
 } Node;
 
 typedef struct Queue{
@@ -27,4 +25,5 @@ typedef struct Queue{
     Node * head;
     Node * tail;
 } Queue;
+
 #endif
