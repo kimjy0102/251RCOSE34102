@@ -131,7 +131,17 @@ void print_queue(Queue* q)
         }
     }
 }
-
+void update_queue(Node** node_array, Queue* q, int time_step, int num_process)
+{
+    for (int i = 0; i < num_process; i++ )
+    {
+        if ( time_step == node_array[i]->process->arrival_time)
+        {
+            insert_node_queue(q, node_array[i]);
+            printf("Process %d is inserted into ready queue\n", node_array[i]->process->PID);
+        }
+    }
+}
 void clean_queue(Queue* q)
 {
     free(q);
