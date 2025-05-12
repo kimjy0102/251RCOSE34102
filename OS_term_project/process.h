@@ -1,5 +1,5 @@
-#ifndef QUEUE_H
-#define QUEUE_H
+#ifndef PROCESS_H
+#define PROCESS_H
 #include "config.h"
 
 Process* create_one_process(int pid);

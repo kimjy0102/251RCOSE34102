@@ -2,6 +2,8 @@
     "files.associations": {
         "linked_list.C": "cpp",
         "stdlib.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "stdio.h": "c",
+        "gantchart.h": "c"
     }
 }
