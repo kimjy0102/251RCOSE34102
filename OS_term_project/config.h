@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define MAX_PROCESS 10  // Max number of process constraint
-#define TIME_QUANTUM 4 // RR
 typedef enum {
     CPU_IDLE,
     CPU_BUSY,

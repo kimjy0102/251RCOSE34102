@@ -105,38 +105,47 @@ Node* dequeue(Queue* q) // Remove only the first node in queue
 }
 Node* remove_node_queue(Queue* q, int location)
 {
-    int count = 1;
-    Node* current = q->head;
-    Node* prev = NULL;
-    if ( location > q->size)
+    if ( location > q->size  || location < 1)
     {
         printf("Location is out of boundary!\n");
+        return NULL;
     }
-    else 
+    
+    Node* current = q->head;
+    Node* prev = NULL;
+
+    for(int i = 1; i<location; i++)
     {
-        for(int i = 1; i<location; i++)
+        prev = current;
+        current = current->next;
+    }
+    if (q->size == 1)
+    {
+        q->head = NULL;
+        q->tail = NULL;
+    }
+    else
+    {
+        if ( current == q->head) // if first node removal
         {
-            prev = current;
-            current = current->next;
+            q->head = q->head->next;
+            q->head->before = NULL;
+        }
+        else if ( current == q->tail )  // last node removal
+        {
+            q->tail = prev;
+            q->tail->next = NULL;
+        }
+        else                            // normal removal
+        {
+            prev->next = current->next; 
+            current->next->before = prev;
         }
     }
-    if ( current == q->head) // if first node removal
-    {
-        q->head = current->next;
-        q->head->before = NULL;
-    }
-    else if ( current == q->tail )  // last node removal
-    {
-        q->tail = prev;
-        q->tail->next = NULL;
-    }
-    else                            // normal removal
-    {
-        prev->next = current->next; 
-        current->next->before = prev;
-    }
-    q->size--;
+    current->next = NULL;
+    current->before = NULL;
     current->in_queue = 0;
+    q->size--;
     return current;
 }
 
@@ -175,7 +184,7 @@ void print_node_array(Node** node_array, int num_process)
     for (int i = 0; i< num_process; i++)
     {
         printf("Process: %d\n", i+1);
-        printf("PID: %d, Arrival time : %d, CPU burst time: %d\n", node_array[i]->process->PID, node_array[i]->process->arrival_time, node_array[i]->process->CPU_burst_time);
+        printf("PID: %d, Arrival time : %d, CPU burst time: %d, Priority: %d\n", node_array[i]->process->PID, node_array[i]->process->arrival_time, node_array[i]->process->CPU_burst_time, node_array[i]->process->Priority);
     }
 
 }

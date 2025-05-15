@@ -1,6 +1,5 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include"queue.c"
 #include"config.h"
 #include"Gantchart.h"
 
@@ -58,6 +57,5 @@ void print_gantchart(Gantchart* chart)
     Gantentry* current = chart->head;
     printf("==========Gant Chart==========\n");
     int width = 0;
-    
 }
 // free gantchart

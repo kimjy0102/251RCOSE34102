@@ -8,13 +8,13 @@ typedef struct Gantentry {
     int PID;
     int start_time;
     int end_time;
-    Gantentry* next;
+    struct Gantentry* next;
 } Gantentry;
 
 typedef struct Gantchart {
     int size;
-    Gantentry* head;
-    Gantentry* tail;
+    struct Gantentry* head;
+    struct Gantentry* tail;
 } Gantchart;
 void add_process_to_chart(int time_step, Node* running, Gantchart* chart);
 Gantchart* init_chart(int num_process);

@@ -32,10 +32,37 @@ int main(void)
         return 1;
     }
     printf("Ready queue created\n");
-    print_queue(ready_queue);
     // scheduling begins
+    int mode = 0;
     Gantchart* chart = init_chart(num_process);
-    FCFS(ready_queue, PCB_array, num_process, chart);
+    printf("Select CPU Scheduling Algorithm\n");
+    printf("1: FCFS 2: Non-preemptive SJF 3: Preemptie SJF 4: Non-preemptive priority 5: Preemptive priority 6: Round-Robin\n");
+    printf("Scheduling mode: ");
+    scanf(" %d", &mode);
+    switch (mode)
+    {
+    case  1:
+        FCFS(ready_queue, PCB_array, num_process, chart);
+        break;
+    case 2:
+        SJF_nonpreemptive(ready_queue, PCB_array, num_process, chart);
+        break;
+    case 3:
+        SJF_preemptive(ready_queue, PCB_array, num_process, chart);
+        break;
+    case 4:
+        Priority_nonpreemptive(ready_queue, PCB_array, num_process, chart);
+        break;
+    case 5:
+        Priority_preemptive(ready_queue, PCB_array, num_process, chart);
+        break;
+    case 6:
+        Round_Robin(ready_queue, PCB_array, num_process, chart);
+        break;
+    default:
+        printf("Wrong Number inserted!\n");
+        return 0;
+    }
     printf("All process terminated at time_step %d\n", time_step - 1);
     clean_all(PCB_array, num_process);
     clean_queue(ready_queue);

@@ -14,7 +14,7 @@ Process* create_one_process(int pid)
     }
     int priority = rand() % 10 + 1; // Priority : 1 ~ 10
     int arrival_time = rand() % 10; // Arrival time : 0 ~ 9
-    int CPU_burst_time = rand() % 10 + 1; // CPU : 1 ~ 25
+    int CPU_burst_time = rand() % 10 + 1; // CPU : 1 ~ 10
     new_process->arrival_time = arrival_time;
     new_process->Priority = priority;
     new_process->CPU_burst_time = CPU_burst_time;
