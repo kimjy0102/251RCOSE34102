@@ -6,7 +6,7 @@
 #include "process.h"
 #include "scheduling.h"
 #include "Gantchart.h"
-
+#include "IO.h"
 int time_step = 0;
 int complete_process = 0;
 int main(void)
@@ -32,6 +32,15 @@ int main(void)
         return 1;
     }
     printf("Ready queue created\n");
+    // I/O waiting queue
+    Queue* waiting_queue = create_waiting_queue();
+    if ( waiting_queue == NULL)
+    {
+        printf("Failed to create waiting queue.\n");
+        clean_all(PCB_array, num_process);
+        return 1;
+    }
+    printf("Waiting queue created\n");
     // scheduling begins
     int mode = 0;
     Gantchart* chart = init_chart(num_process);
@@ -42,22 +51,22 @@ int main(void)
     switch (mode)
     {
     case  1:
-        FCFS(ready_queue, PCB_array, num_process, chart);
+        FCFS(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     case 2:
-        SJF_nonpreemptive(ready_queue, PCB_array, num_process, chart);
+        SJF_nonpreemptive(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     case 3:
-        SJF_preemptive(ready_queue, PCB_array, num_process, chart);
+        SJF_preemptive(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     case 4:
-        Priority_nonpreemptive(ready_queue, PCB_array, num_process, chart);
+        Priority_nonpreemptive(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     case 5:
-        Priority_preemptive(ready_queue, PCB_array, num_process, chart);
+        Priority_preemptive(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     case 6:
-        Round_Robin(ready_queue, PCB_array, num_process, chart);
+        Round_Robin(ready_queue, waiting_queue, PCB_array, num_process, chart);
         break;
     default:
         printf("Wrong Number inserted!\n");
@@ -66,5 +75,6 @@ int main(void)
     printf("All process terminated at time_step %d\n", time_step - 1);
     clean_all(PCB_array, num_process);
     clean_queue(ready_queue);
+    clean_queue(waiting_queue);
     return 0;
 }

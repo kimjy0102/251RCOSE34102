@@ -15,6 +15,12 @@ typedef struct Process{
     int Priority;
     int turnaround_time;   // Total time from arrival to completion
     int waiting_time;      // Time spent waiting in ready queue
+    // I/O
+    int MAX_CPU_time;
+    int* IO_burst_time;
+    int* IO_request_time;
+    int IO_num; 
+    int i;              // index for IO burst & request array
 } Process;
 
 typedef struct Node{

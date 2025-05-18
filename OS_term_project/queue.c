@@ -75,13 +75,13 @@ void insert_node_queue(Queue* q, Node* new_node)
     }
     new_node->in_queue = 1;
     q->size++;
-    printf("Process %d is inserted.\n", new_node->process->PID);
+    //printf("Process %d is inserted to ready queue.\n", new_node->process->PID);
 }
 Node* dequeue(Queue* q) // Remove only the first node in queue
 {   
     if (q->head == NULL)
     {
-        printf("Ready Queue is empty\n");
+        printf("Queue is empty\n");
         return NULL;
     }
     else if (q->head->next == NULL) // when only one node is in queue
@@ -152,7 +152,7 @@ Node* remove_node_queue(Queue* q, int location)
 void print_queue(Queue* q)
 {
     Node* current = q->head;
-    printf("========Queue status======== Size: %d\n", q->size);
+    printf("========  Queue status  ======== Size: %d\n", q->size);
     if ( current == NULL)
     {
         printf("No processes in ready queue now\n");
@@ -184,7 +184,12 @@ void print_node_array(Node** node_array, int num_process)
     for (int i = 0; i< num_process; i++)
     {
         printf("Process: %d\n", i+1);
-        printf("PID: %d, Arrival time : %d, CPU burst time: %d, Priority: %d\n", node_array[i]->process->PID, node_array[i]->process->arrival_time, node_array[i]->process->CPU_burst_time, node_array[i]->process->Priority);
+        printf("PID: %d, Arrival time : %d, CPU burst time: %d, Priority: %d, Nuber of IO execution: %d\n", node_array[i]->process->PID, node_array[i]->process->arrival_time, node_array[i]->process->CPU_burst_time, node_array[i]->process->Priority, node_array[i]->process->IO_num);
+        for ( int j = 0; j < node_array[i]->process->IO_num; j++)
+        {
+            printf("====IO Stauts====\n");
+            printf("I/O request time: %d, I/o burst time: %d\n", node_array[i]->process->IO_request_time[j], node_array[i]->process->IO_burst_time[j]);
+        }
     }
 
 }
