@@ -73,7 +73,6 @@ void insert_node_queue(Queue* q, Node* new_node)
         q->tail = new_node;
         new_node->next = NULL;
     }
-    new_node->in_queue = 1;
     q->size++;
     //printf("Process %d is inserted to ready queue.\n", new_node->process->PID);
 }
@@ -98,7 +97,6 @@ Node* dequeue(Queue* q) // Remove only the first node in queue
         q->head = q->head->next;
         q->head->before = NULL;
         q->size--;
-        temp->in_queue = 0;
         printf("Process %d is removed from ready queue.\n", temp->process->PID);
         return temp;
     }
@@ -144,7 +142,6 @@ Node* remove_node_queue(Queue* q, int location)
     }
     current->next = NULL;
     current->before = NULL;
-    current->in_queue = 0;
     q->size--;
     return current;
 }
@@ -174,6 +171,7 @@ void update_queue(Node** node_array, Queue* q, int time_step, int num_process)
         if ( time_step == node_array[i]->process->arrival_time)
         {
             insert_node_queue(q, node_array[i]);
+            node_array[i]->in_queue = 1;
             printf("Process %d is inserted into ready queue\n", node_array[i]->process->PID);
         }
     }

@@ -93,6 +93,7 @@ void update_io_queue(Queue* waiting_queue, Queue* ready_queue)
         if ( current_process->process->IO_burst_time[current_process->process->i] == 0 )
         {
             printf("PID %d I/O work finished. Back to ready queue\n", current_process->process->PID);
+            current_process->in_queue = 1;
             current_process->process->i++;
             waiting_to_ready_queue(waiting_queue, ready_queue);
             if ( waiting_queue->size == 0)

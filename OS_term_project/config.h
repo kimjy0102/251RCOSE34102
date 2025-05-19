@@ -1,10 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-typedef enum {
-    CPU_IDLE,
-    CPU_BUSY,
-} STATUS;
 extern int time_step;
 extern int complete_process;
 

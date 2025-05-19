@@ -5,6 +5,7 @@
         "config.h": "c",
         "stdio.h": "c",
         "gantchart.h": "c",
-        "queue.h": "c"
+        "queue.h": "c",
+        "evaluation.h": "c"
     }
 }

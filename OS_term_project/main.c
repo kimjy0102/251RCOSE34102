@@ -7,6 +7,7 @@
 #include "scheduling.h"
 #include "Gantchart.h"
 #include "IO.h"
+#include "evaluation.h"
 int time_step = 0;
 int complete_process = 0;
 int main(void)
@@ -75,6 +76,8 @@ int main(void)
     }
     printf("All process terminated at time_step %d\n", time_step - 1);
     print_gantchart(cpu_chart, io_chart);
+    print_turnaround_time(num_process, PCB_array);
+    print_waiting_time(num_process, PCB_array);
     clean_all(PCB_array, num_process);
     clean_queue(ready_queue);
     clean_queue(waiting_queue);
