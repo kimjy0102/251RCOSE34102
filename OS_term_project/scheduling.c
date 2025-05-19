@@ -5,7 +5,7 @@
 #include"IO.h"
 #define TIME_QUANTUM 2
 int remaining_quantum = TIME_QUANTUM;
-Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STATUS* cpu_status, Gantchart* chart)
+Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     if (running == NULL) // No cpu assign right before
     {
@@ -13,7 +13,7 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
         {
             running = dequeue(q);
             printf("Process %d started at time %d\n", running->process->PID, time_step);
-            //add_process_to_chart(time_step, running, chart);
+            add_process_to_chart(time_step, running, cpu_chart);
             running->process->waiting_time = time_step - running->process->arrival_time;
             *cpu_status = CPU_BUSY;
             return running;
@@ -22,6 +22,7 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
         {
             printf("No process is avaliable. CPU is idle.\n");
             *cpu_status = CPU_IDLE; 
+            add_process_to_chart(time_step, running, cpu_chart);
             return NULL;
         }
     }
@@ -34,10 +35,13 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
             if (running->process->IO_request_time[running->process->i] == (running->process->MAX_CPU_time - running->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running->process->PID);
                 if ( q->size > 0)
                 {
                     running = dequeue(q);
+                    add_process_to_chart(time_step, running, cpu_chart);
                     printf("Process %d started at time %d\n", running->process->PID, time_step);
                     *cpu_status = CPU_BUSY;
                     return running;
@@ -45,6 +49,7 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
                 else 
                 {
                     printf("No process is avaliable. CPU is idle.\n");
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     *cpu_status = CPU_IDLE; 
                     return NULL;
                 }
@@ -55,13 +60,15 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
             running->process->turnaround_time = time_step + 1 - running->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running->process->PID, time_step);
-            //add_endtime_to_entry(time_step, chart);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( q->size == 0)
             {
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             running = dequeue(q);
             printf("Process %d started at time %d\n", running->process->PID, time_step);
+            add_process_to_chart(time_step, running, cpu_chart);
             *cpu_status = CPU_BUSY;
             return running;
         }
@@ -70,7 +77,7 @@ Node* FCFS_sub(Queue* q, Queue* waiting_queue, int time_step, Node* running, STA
 }
 
 // high number -> high priority
-Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* chart)
+Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     Node* current = ready_queue->head;
     int max = 0;
@@ -90,6 +97,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
                 if( current->process->Priority == max)
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
@@ -107,6 +115,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
         else // no process in ready queue
         {
             printf("No process is avaliable. CPU is idle.\n");
+            add_process_to_chart(time_step, NULL, cpu_chart);
             *cpu_status = CPU_IDLE; 
             return NULL;
         }
@@ -119,6 +128,8 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
             if (running_process->process->IO_request_time[running_process->process->i] == (running_process->process->MAX_CPU_time - running_process->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running_process, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running_process->process->PID);
                 if ( ready_queue->size > 0)
                 {
@@ -135,6 +146,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
                         {
                             running_process = remove_node_queue(ready_queue, i+1);
                             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                            add_process_to_chart(time_step, running_process, cpu_chart);
                             running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                             *cpu_status = CPU_BUSY;
                             return running_process;
@@ -146,6 +158,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
                 else // no process in ready queue
                 {
                     printf("No process is avaliable. CPU is idle.\n");
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     *cpu_status = CPU_IDLE; 
                     return NULL;
                 }
@@ -156,8 +169,10 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
             running_process->process->turnaround_time = time_step + 1 - running_process->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running_process->process->PID, time_step);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( ready_queue->size == 0) {
                 *cpu_status = CPU_IDLE;
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             for (int i = 0; i< ready_queue->size; i++)
@@ -173,6 +188,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -186,7 +202,7 @@ Node* Priority_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int t
 }
 
 // small cpu burst time -> high priority
-Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* chart)
+Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     Node* current = ready_queue->head;
     int min = 11;
@@ -207,6 +223,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -223,6 +240,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
         else // no process in ready queue
         {
             printf("No process is avaliable. CPU is idle.\n");
+            add_process_to_chart(time_step, NULL, cpu_chart);
             *cpu_status = CPU_IDLE; 
             return NULL;
         }
@@ -236,6 +254,8 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
             if (running_process->process->IO_request_time[running_process->process->i] == (running_process->process->MAX_CPU_time - running_process->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running_process, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running_process->process->PID);
                 if ( ready_queue->size > 0)
                 {
@@ -252,6 +272,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
                         {
                             running_process = remove_node_queue(ready_queue, i+1);
                             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                            add_process_to_chart(time_step, running_process, cpu_chart);
                             running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                             *cpu_status = CPU_BUSY;
                             return running_process;
@@ -263,6 +284,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
                 else 
                 {
                     printf("No process is avaliable. CPU is idle.\n");
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     *cpu_status = CPU_IDLE; 
                     return NULL;
                 }
@@ -273,8 +295,10 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
             running_process->process->turnaround_time = time_step + 1 - running_process->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running_process->process->PID, time_step);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( ready_queue->size == 0) {
                 *cpu_status = CPU_IDLE;
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             for (int i = 0; i< ready_queue->size; i++)
@@ -290,6 +314,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -302,7 +327,7 @@ Node* SJF_nonpreemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_s
     }
 }
 
-Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* chart)
+Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     Node* current = ready_queue->head;
     int min = 11;
@@ -324,6 +349,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -340,6 +366,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
         else // there is no process in ready queue
         {
             printf("No process is avaliable. CPU is idle.\n");
+            add_process_to_chart(time_step, NULL, cpu_chart);
             *cpu_status = CPU_IDLE; 
             return NULL;
         }
@@ -352,6 +379,8 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
             if (running_process->process->IO_request_time[running_process->process->i] == (running_process->process->MAX_CPU_time - running_process->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running_process, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running_process->process->PID);
                 if ( ready_queue->size > 0)
                 {
@@ -368,6 +397,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
                         {
                             running_process = remove_node_queue(ready_queue, i+1);
                             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                            add_process_to_chart(time_step, running_process, cpu_chart);
                             running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                             *cpu_status = CPU_BUSY;
                             return running_process;
@@ -380,6 +410,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
                 {
                     printf("No process is avaliable. CPU is idle.\n");
                     *cpu_status = CPU_IDLE; 
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     return NULL;
                 }
             }
@@ -389,8 +420,10 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
             running_process->process->turnaround_time = time_step + 1 - running_process->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running_process->process->PID, time_step);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( ready_queue->size == 0) {
                 *cpu_status = CPU_IDLE;
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             for (int i = 0; i< ready_queue->size; i++)
@@ -406,6 +439,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -429,12 +463,14 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
             {
                 printf("Preemption occured!\n");
                 insert_node_queue(ready_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
                 for ( int i = 0; i < ready_queue->size; i++)
                 {
                     if (current->process->CPU_burst_time == min)
                     {
                         running_process = remove_node_queue(ready_queue, i+1);
                         printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                        add_process_to_chart(time_step, running_process, cpu_chart);
                         *cpu_status = CPU_BUSY;
                         return running_process;
                     }
@@ -448,7 +484,7 @@ Node* SJF_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step
     }
 }
 
-Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* chart)
+Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     Node* current = ready_queue->head;
     int max = 0;
@@ -469,6 +505,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -485,6 +522,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
         else // no process in ready queue
         {
             printf("No process is avaliable. CPU is idle.\n");
+            add_process_to_chart(time_step, NULL, cpu_chart);
             *cpu_status = CPU_IDLE; 
             return NULL;
         }
@@ -497,6 +535,8 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
             if (running_process->process->IO_request_time[running_process->process->i] == (running_process->process->MAX_CPU_time - running_process->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running_process, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running_process->process->PID);
                 if ( ready_queue->size > 0)
                 {
@@ -513,6 +553,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
                         {
                             running_process = remove_node_queue(ready_queue, i+1);
                             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                            add_process_to_chart(time_step, running_process, cpu_chart);
                             running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                             *cpu_status = CPU_BUSY;
                             return running_process;
@@ -524,6 +565,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
                 else 
                 {
                     printf("No process is avaliable. CPU is idle.\n");
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     *cpu_status = CPU_IDLE; 
                     return NULL;
                 }
@@ -534,8 +576,10 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
             running_process->process->turnaround_time = time_step + 1 - running_process->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running_process->process->PID, time_step);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( ready_queue->size == 0) {
                 *cpu_status = CPU_IDLE;
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             for (int i = 0; i< ready_queue->size; i++)
@@ -551,6 +595,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
                 {
                     running_process = remove_node_queue(ready_queue, i+1);
                     printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                    add_process_to_chart(time_step, running_process, cpu_chart);
                     running_process->process->waiting_time = time_step - running_process->process->arrival_time;
                     *cpu_status = CPU_BUSY;
                     return running_process;
@@ -573,12 +618,14 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
             {
                 printf("Preemption occured!\n");
                 insert_node_queue(ready_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
                 for ( int i = 0; i < ready_queue->size; i++)
                 {
                     if (current->process->Priority == max)
                     {
                         running_process = remove_node_queue(ready_queue, i+1);
                         printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                        add_process_to_chart(time_step, running_process, cpu_chart);
                         *cpu_status = CPU_BUSY;
                         return running_process;
                     }
@@ -592,7 +639,7 @@ Node* Priority_preemptive_sub(Queue* ready_queue, Queue* waiting_queue, int time
     }
 }
 
-Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* chart)
+Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, Node* running_process, STATUS* cpu_status, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     if (running_process == NULL)
     {
@@ -600,7 +647,7 @@ Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, N
         {
             running_process = dequeue(ready_queue);
             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
-            //add_process_to_chart(time_step, running, chart);
+            add_process_to_chart(time_step, running_process, cpu_chart);
             // running_process->process->waiting_time = time_step - running_process->process->arrival_time;
             remaining_quantum = 2;
             *cpu_status = CPU_BUSY;
@@ -609,6 +656,7 @@ Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, N
         else // there is no process in ready queue
         {
             printf("No process is avaliable. CPU is idle.\n");
+            add_process_to_chart(time_step, NULL, cpu_chart);
             *cpu_status = CPU_IDLE; 
             return NULL;
         }
@@ -622,15 +670,19 @@ Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, N
             if ( running_process->process->IO_request_time[running_process->process->i] == (running_process->process->MAX_CPU_time - running_process->process->CPU_burst_time))
             {
                 running_to_waiting_queue(waiting_queue, running_process);
+                add_endtime_to_entry(time_step, cpu_chart);
+                add_process_to_io_chart(time_step, waiting_queue, running_process, io_chart);
                 printf("Process %d moved to I/o wait queue\n", running_process->process->PID);
                 if ( ready_queue->size == 0)
                 {
                     *cpu_status = CPU_IDLE;
+                    add_process_to_chart(time_step, NULL, cpu_chart);
                     return NULL;
                 }
                 running_process = dequeue(ready_queue);
                 remaining_quantum = 2;
                 printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+                add_process_to_chart(time_step, running_process, cpu_chart);
                 *cpu_status = CPU_BUSY;
                 return running_process;
             }
@@ -640,25 +692,29 @@ Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, N
             running_process->process->turnaround_time = time_step + 1 - running_process->process->arrival_time;
             complete_process++;
             printf("Process %d is completed at time step %d\n", running_process->process->PID, time_step);
-            //add_endtime_to_entry(time_step, chart);
+            add_endtime_to_entry(time_step, cpu_chart);
             if ( ready_queue->size == 0)
             {
                 *cpu_status = CPU_IDLE;
+                add_process_to_chart(time_step, NULL, cpu_chart);
                 return NULL;
             }
             running_process = dequeue(ready_queue);
             remaining_quantum = 2;
             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+            add_process_to_chart(time_step, running_process, cpu_chart);
             *cpu_status = CPU_BUSY;
             return running_process;
         }
         else if (( remaining_quantum == 0) && ( ready_queue->size != 0)) // time quantum is over -> go back to ready queue
         {
             printf("Process %d out of time quantum\n", running_process->process->PID);
+            add_endtime_to_entry(time_step, cpu_chart);
             insert_node_queue(ready_queue, running_process);
             running_process = dequeue(ready_queue);
             remaining_quantum = 2;
             printf("Process %d started at time %d\n", running_process->process->PID, time_step);
+            add_process_to_chart(time_step, running_process, cpu_chart);
             *cpu_status = CPU_BUSY;
             return running_process;
         }
@@ -666,14 +722,15 @@ Node* Round_Robin_sub(Queue* ready_queue, Queue* waiting_queue, int time_step, N
             return running_process;
     }
 }
-//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FCFS(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void FCFS(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
@@ -681,18 +738,25 @@ void FCFS(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_pr
         }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = FCFS_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);  // cpu_status의 주소 전달
+        if ( temp != waiting_queue->size)       // waiting queue size different ->To check i/o work is done
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
+        running_process = FCFS_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);  // cpu_status의 주소 전달
         printf("complete process: %d\n", complete_process);
         time_step++;
     }
 }
 
-void Priority_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void Priority_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
@@ -700,18 +764,25 @@ void Priority_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb
         }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = Priority_nonpreemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);
+        if ( temp != waiting_queue->size)
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
+        running_process = Priority_nonpreemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);
         printf("complete process: %d\n", complete_process);
         time_step++;
     }
 }
 
-void SJF_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void SJF_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
@@ -719,18 +790,25 @@ void SJF_nonpreemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_arra
         }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = SJF_nonpreemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);
+        if ( temp != waiting_queue->size)
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
+        running_process = SJF_nonpreemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);
         printf("complete process: %d\n", complete_process);
         time_step++;
     }
 }
 
-void SJF_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void SJF_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
@@ -738,18 +816,25 @@ void SJF_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, 
         }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = SJF_preemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);
+        if ( temp != waiting_queue->size)
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
+        running_process = SJF_preemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);
         printf("complete process: %d\n", complete_process);
         time_step++;
     }
 }
 
-void Priority_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void Priority_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
@@ -757,26 +842,39 @@ void Priority_preemptive(Queue* ready_queue, Queue* waiting_queue, Node** pcb_ar
         }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = Priority_preemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);
+        if ( temp != waiting_queue->size)
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
+        running_process = Priority_preemptive_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);
         printf("complete process: %d\n", complete_process);
         time_step++;
     }
 }
 // Round robin & FCFS
-void Round_Robin(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* chart)
+void Round_Robin(Queue* ready_queue, Queue* waiting_queue, Node** pcb_array, int num_process, Gantchart* cpu_chart, Gantchart* io_chart)
 {
     STATUS cpu_status = CPU_IDLE;
     Node* running_process = NULL;
     while( complete_process != num_process)
     {
+        int temp = waiting_queue->size;
         printf("====================Time step: %d====================\n", time_step);
         if (time_step != 0) {
             update_queue(pcb_array, ready_queue, time_step, num_process);
             update_io_queue(waiting_queue, ready_queue);
         }
+        if ( temp != waiting_queue->size)
+        {
+            add_endtime_to_entry(time_step, io_chart);
+            if (waiting_queue->size != 0)
+                add_process_to_io_chart(time_step, waiting_queue, waiting_queue->head, io_chart);
+        }
         print_queue(ready_queue);
         print_io_queue(waiting_queue);
-        running_process = Round_Robin_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, chart);
+        running_process = Round_Robin_sub(ready_queue, waiting_queue, time_step, running_process, &cpu_status, cpu_chart, io_chart);
         printf("complete process: %d\n", complete_process);
         time_step++;
     }

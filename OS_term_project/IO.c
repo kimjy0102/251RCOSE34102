@@ -105,7 +105,7 @@ void update_io_queue(Queue* waiting_queue, Queue* ready_queue)
 void print_io_queue(Queue* q)
 {
     Node* current = q->head;
-    printf("========Wait queue status========Size: %d\n", q->size);
+    printf("=======Wait queue status=======Size: %d\n", q->size);
     if ( current == NULL)
     {
         printf("No processes in waiting queue now\n");
