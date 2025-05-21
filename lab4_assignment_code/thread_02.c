@@ -46,7 +46,7 @@ int main(int argc, char* argv[]){
 
 /*
 Expected output:
-</2> : pthread_create </3> : (&tid[i], NULL, &worker, (void*)pthread_self()), <1>: pthread_exit(void*) </4> : pthread_join(&tid[i], )
+</2> : pthread_create </3> : (&tid[i], NULL, &worker, (void*)pthread_self()), <1>: pthread_exit(NULL) </4> : pthread_join(tid[i], NULL)
 global		main		thread		thread-static
 AxAAAAAA	BxBBBBBB	(nil)	    (nil)
 AxAAAAAA	CxCCCCCC	DxDD....	ExEEEEEE
